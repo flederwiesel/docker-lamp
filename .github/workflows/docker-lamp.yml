@@ -1,0 +1,75 @@
+name: docker-lamp
+
+on:
+  pull_request:
+  push:
+    branches:
+    - 'main'
+    - 'bug/**'
+    - 'feature/**'
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
+
+jobs:
+  lamp:
+    strategy:
+      matrix:
+        envfile:
+          - "env_php-7.4.33_mariadb-10.6.19"
+          - "env_php-8.3.11_mariadb-11.2.4"
+
+    name: lamp-${{ matrix.envfile }}
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create certificates
+        run: |
+          set -euo pipefail
+
+          ./mkcerts.sh
+          # View created files
+          find certs/ -printf "%M %p\n" | sort -k 1.12
+
+      - name: Build and run docker images
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+        run: |
+          docker compose up --detach
+
+          # Wait for startup of services by parsing output and
+          # exiting awk if all conditions are met
+          timeout 10 awk 'BEGIN { apache = mariadb = temp = 0 }
+
+            /AH00094: Command line/ { apache = 1 }
+
+            /Starting temporary server/ { temp = 1 }
+            /Temporary server stopped/ { temp = 0 }
+
+            /mariadbd: ready for connections./ {
+              if (!temp)
+                mariadb = 1
+            }
+
+            { print $0 }
+
+            apache == 1 && mariadb == 1 { exit 0 }
+          ' <(docker compose logs --follow apache mariadb)
+
+      - name: Run test
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+        run: |
+          bash -x ${GITHUB_WORKSPACE}/test.sh
+
+      - name: Stop containers
+        if: always()
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+        run: |
+          source $COMPOSE_ENV_FILES
+
+          docker compose down
+          docker volume rm --force "${PROJECT_NAME}*"

@@ -1,0 +1,10 @@
+.*ignore
+.env
+apache/
+certs/
+docker-compose*.yml
+mariadb/
+mkcert/
+mkcerts.sh
+home/
+ssl/

@@ -1,0 +1,22 @@
+PROJECT_NAME=docker-lamp
+
+MARIADB_VERSION=10.6.19
+# select password('p4$$w0rd');
+# Not used in actual config, but required in tests:
+MARIADB_PASSWORD='p4$$w0rd'
+MARIADB_ROOT_PASSWORD_HASH=*B6B2B2FDDDD486C8F4A4CC3980C434DB6380ACEA
+MARIADB_PASSWORD_HASH=*B6B2B2FDDDD486C8F4A4CC3980C434DB6380ACEA
+MARIADB_USER=mariadb
+# Don't create default database
+#MARIADB_DATABASE=mariadb
+# Either use a bind mount...
+#MARIADB_DATADIR=./mariadb/data
+# ...or a volume, which then must be called "mariadb-data"
+MARIADB_DATADIR=mariadb-data
+
+PHP_VERSION=7.4.33
+PHPMYADMIN_VERSION=5.2.1
+# pecl/xdebug 3.1.6 requires PHP (version >= 7.2.0, version <= 8.1.99)
+XDEBUG_VERSION=3.1.6
+
+HTMLDIR=./apache/www/html

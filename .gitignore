@@ -1,0 +1,6 @@
+.env
+certs/
+home/*/.*_history
+mariadb/data/
+mkcert/
+ssl/

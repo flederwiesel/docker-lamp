@@ -1,0 +1,51 @@
+name: "${PROJECT_NAME?}"
+
+services:
+  mariadb:
+    image: "mariadb:${MARIADB_VERSION?}"
+    hostname: mariadb
+    restart: unless-stopped
+    environment:
+      # https://mariadb.com/kb/en/mariadb-server-docker-official-image-environment-variables/
+      # https://mariadb.com/kb/en/mariadb-environment-variables/
+      # https://mariadb.com/kb/en/full-list-of-mariadb-options-system-and-status-variables/
+      MARIADB_ROOT_PASSWORD_HASH: "${MARIADB_ROOT_PASSWORD_HASH?}"
+      MARIADB_ROOT_HOST: mariadb
+      MARIADB_USER: ${MARIADB_USER:-mariadb}
+      MARIADB_PASSWORD_HASH: "${MARIADB_PASSWORD_HASH?}"
+      MARIADB_DATABASE: "${MARIADB_DATABASE:-}"
+      TZ: Europe/Berlin
+    volumes:
+      - "./certs/ca-cert.crt:/usr/local/share/ca-certificates/ca-cert.crt"
+      - "./certs/mariadb:/etc/mysql/ssl"
+      - "./mariadb/conf:/etc/mysql"
+      - "${MARIADB_DATADIR:-mariadb-data}:/var/lib/mysql"
+    ports:
+      - "3306:3306"
+
+  apache:
+    build:
+      context: "./apache"
+      dockerfile: Dockerfile
+      args:
+        PHP_VERSION: "${PHP_VERSION?}"
+    image: "flederwiesel/php:${PHP_VERSION?}-apache"
+    hostname: apache
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html
+      MARIADB_USER: ${MARIADB_USER:-mariadb}
+    volumes:
+      - "./apache/bin/apache2.init.d:/usr/local/bin/apache2.init.d"
+      - "./apache/etc/sites-available:/etc/apache2/sites-available"
+      - "./certs/apache:/etc/apache2/ssl"
+      - "./certs/ca-cert.crt:/usr/local/share/ca-certificates/ca-cert.crt"
+      - "${HTMLDIR:-./apache/www/html}:/var/www/html"
+    ports:
+      - "80:80"
+      - "443:443"
+
+volumes:
+  mariadb-data:

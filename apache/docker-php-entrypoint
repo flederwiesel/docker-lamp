@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -euo pipefail
+
+: "${APACHE_CONFDIR:=/etc/apache2}"
+: "${APACHE_DOCUMENT_ROOT:=/var/www/html}"
+
+export APACHE_CONFDIR
+
+# Launch custom init scripts
+if [ -d /usr/local/bin/apache2.init.d ]; then
+	run-parts /usr/local/bin/apache2.init.d
+fi
+
+a2query -m rewrite || a2enmod rewrite
+a2query -m ssl     || a2enmod ssl
+
+for site in $(find /etc/apache2/sites-available/ -printf "%P\n")
+do
+	a2query -s "$site" || a2ensite "$site"
+done
+
+apache2-foreground

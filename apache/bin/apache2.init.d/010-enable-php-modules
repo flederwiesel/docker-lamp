@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ -d "$PHP_INI_DIR/conf.d/" ]; then
+	cat <<"EOF" > "$PHP_INI_DIR/conf.d/php.ini"
+;extension=curl ; Already enabled from command line
+;extension=mbstring  ; Already enabled from command line
+EOF
+
+	if [[ $XDEBUG_VERSION ]]; then
+		cat <<"EOF" > "$PHP_INI_DIR/conf.d/php-ext-xdebug.ini"
+zend_extension=xdebug
+
+[xdebug]
+xdebug.mode=coverage,debug,develop,gcstats,profile,trace
+xdebug.start_with_request=yes
+xdebug.discover_client_host=true
+xdebug.client_port=9003
+EOF
+	fi
+fi

@@ -6,9 +6,15 @@ if (preg_match("/curl/", $_SERVER["HTTP_USER_AGENT"]??"unknown"))
 	echo "Apache Version ".apache_get_version().".\n";
 	echo "Zend Engine ".zend_version().".\n";
 
+	$xdebug = phpversion("xdebug");
+
+	if ($xdebug)
+		echo "XDebug Version ${xdebug}\n";
+
 	echo "Loaded Extensions:\n";
 
 	$extensions = get_loaded_extensions();
+
 	sort($extensions);
 
 	foreach ($extensions as $ext)

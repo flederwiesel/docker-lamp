@@ -1,0 +1,46 @@
+# syntax=docker/dockerfile:1.4
+
+ARG PHP_VERSION
+
+FROM flederwiesel/php:${PHP_VERSION}-apache
+
+RUN <<_RUN
+	# Install development tools
+	set -eux
+	apt-get update
+	DEBIAN_FRONTEND=non-interactive \
+	apt-get install --yes --no-install-recommends \
+		bash-completion \
+		command-not-found \
+		git \
+		jq \
+		mariadb-client \
+		nano
+
+	update-command-not-found
+
+	rm -rf /var/lib/apt/lists/*
+_RUN
+
+ARG PHPMYADMIN_VERSION
+ENV PHPMYADMIN_VERSION="$PHPMYADMIN_VERSION"
+
+RUN <<_RUN
+	# Install phpMyAdmin
+	set -eux
+
+	docker-php-ext-install -j "$(nproc)" mysqli
+
+	wget --no-verbose "https://files.phpmyadmin.net/phpMyAdmin/${PHPMYADMIN_VERSION}/phpMyAdmin-${PHPMYADMIN_VERSION}-english.tar.xz"
+	mkdir /var/www/phpmyadmin
+	tar xf "phpMyAdmin-${PHPMYADMIN_VERSION}-english.tar.xz" -C /var/www/phpmyadmin/ --strip-components=1
+	rm "phpMyAdmin-${PHPMYADMIN_VERSION}-english.tar.xz"
+_RUN
+
+ARG XDEBUG_VERSION
+ENV XDEBUG_VERSION="$XDEBUG_VERSION"
+
+RUN <<_RUN
+	# Install xdebug
+	pecl install "xdebug-${XDEBUG_VERSION}"
+_RUN

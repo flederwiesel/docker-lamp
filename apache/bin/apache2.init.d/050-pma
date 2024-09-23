@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -d /var/www/phpmyadmin ]; then
+	[ -d /var/www/phpmyadmin/tmp/ ] || mkdir /var/www/phpmyadmin/tmp
+	chown www-data:www-data /var/www/phpmyadmin/tmp
+
+	a2ensite phpmyadmin
+
+	[ -f /var/www/phpmyadmin/config.inc.php ] ||
+	{
+		blowfish_secret=$(base64 /dev/urandom | head -c 32)
+		sed "s#%{blowfish_secret}#${blowfish_secret}#g" \
+			/var/www/phpmyadmin/config.inc.php.in > /var/www/phpmyadmin/config.inc.php
+	}
+fi

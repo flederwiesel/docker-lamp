@@ -18,8 +18,11 @@ jobs:
         envfile:
           - "env_php-7.4.33_mariadb-10.6.19"
           - "env_php-8.3.11_mariadb-11.2.4"
+        flavour:
+          - simple
+          - development
 
-    name: lamp-${{ matrix.envfile }}
+    name: ${{ matrix.envfile }}  -${{ matrix.flavour }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
@@ -37,7 +40,11 @@ jobs:
         env:
           COMPOSE_ENV_FILES: ${{ matrix.envfile }}
         run: |
-          docker compose up --detach
+          if [ "${{ matrix.flavour }}" = "simple" ]; then
+            docker compose up --detach
+          else
+            ${GITHUB_WORKSPACE}/docker-compose-devel up --detach
+          fi
 
           # Wait for startup of services by parsing output and
           # exiting awk if all conditions are met

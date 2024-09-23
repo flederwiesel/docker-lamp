@@ -40,10 +40,39 @@ sed '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/d; /TLS session ti
 curl --cacert "${SCRIPTDIR:-.}/certs/ca-cert.crt" https://localhost &>/dev/null
 
 # Check for loaded PHP extensions
-diff -u - <(
+
+# Some extensions are only present for development, filter those via
+# SKIP_CHECK_PHPEXT="foo|bar" instead of coding expected output and grep list twice...
+iid=$(docker compose images apache --quiet)
+image=$(docker inspect "$iid" --format "{{index .RepoTags 0}}")
+
+if [[ $image =~ -devel$ ]]; then
+	echo "Detected development environment..."
+	DEVELOPMENT=true
+else
+	SKIP_CHECK_PHPEXT="mysqli"
+fi
+
+diff -u <(
+	# Expected output
+	sed -r "${SKIP_CHECK_PHPEXT:+/    $SKIP_CHECK_PHPEXT/d}" <<-EOF
+		PHP Version ${PHP_VERSION}
+		Loaded Extensions:
+		    PDO
+		    curl
+		    date
+		    hash
+		    iconv
+		    json
+		    mbstring
+		    mysqli
+		    pdo_mysql
+		EOF
+) <(
+	# Filtered list from server
 	curl -sSL --cacert "${SCRIPTDIR:-.}/certs/ca-cert.crt" https://localhost |
 	grep -Ff <(
-		cat <<-EOF
+		sed -r "${SKIP_CHECK_PHPEXT:+/    $SKIP_CHECK_PHPEXT/d}" <<-EOF
 			PHP Version ${PHP_VERSION}
 			Loaded Extensions:
 			    PDO
@@ -53,32 +82,40 @@ diff -u - <(
 			    iconv
 			    json
 			    mbstring
+			    mysqli
 			    pdo_mysql
 			EOF
 	)
-) <<-EOF
-	PHP Version ${PHP_VERSION}
-	Loaded Extensions:
-	    PDO
-	    curl
-	    date
-	    hash
-	    iconv
-	    json
-	    mbstring
-	    pdo_mysql
-	EOF
+)
 
-# Check for mariadb connectivity
-docker compose exec --no-TTY mariadb mariadb \
-	--user="$MARIADB_USER" \
-	--password="$MARIADB_PASSWORD" \
-	--skip-column-names <<< "select version();"
-# Check for mariadb TLS usage
-docker compose exec --no-TTY mariadb mariadb \
-	--user="$MARIADB_USER" \
-	--password="$MARIADB_PASSWORD" \
-	--skip-column-names <<< "SHOW SESSION STATUS LIKE 'Ssl_%';" |
-grep "Ssl_version\s*TLSv1.3"
+# Check mariadb login - apache has mariadb installed only development environment
 
-echo -e "\033[32m=== SUCCESS ===\033[m"
+for service in ${DEVELOPMENT:+apache} mariadb
+do
+	# Check for mariadb connectivity
+	docker compose exec --no-TTY "$service" mariadb \
+		--user="$MARIADB_USER" \
+		--password="$MARIADB_PASSWORD" \
+		--skip-column-names <<< "select version();"
+
+	# Check for mariadb TLS usage
+	docker compose exec --no-TTY "$service" mariadb \
+		--user="$MARIADB_USER" \
+		--password="$MARIADB_PASSWORD" \
+		--skip-column-names <<< "SHOW SESSION STATUS LIKE 'Ssl_%';" |
+	grep "Ssl_version\s*TLSv1.3"
+done
+
+# Check phpMyAdmin running on port 8443
+
+if [[ ${DEVELOPMENT:-} ]]; then
+	curl -sSL --cacert "${SCRIPTDIR:-.}/certs/ca-cert.crt" https://localhost:8443 |
+	grep -o "<title>localhost:8443 / mariadb | phpMyAdmin.*</title>"
+
+	curl -sSL --cacert "${SCRIPTDIR:-.}/certs/ca-cert.crt" https://localhost:8443 |
+	grep -o "logged_in:true"
+fi
+
+if [ -t 1 ]; then
+	echo -e "\033[32m=== SUCCESS ===\033[m"
+fi

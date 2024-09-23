@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1.4
+
+ARG MARIADB_VERSION
+
+FROM mariadb:${MARIADB_VERSION}
+
+RUN <<_RUN
+	# Install development tools
+	set -eux
+	apt-get update
+	DEBIAN_FRONTEND=non-interactive \
+	apt-get install --yes --no-install-recommends \
+		bash-completion \
+		command-not-found \
+		git \
+		nano
+
+	rm -rf /var/lib/apt/lists/*
+_RUN

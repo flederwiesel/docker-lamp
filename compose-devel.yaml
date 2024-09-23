@@ -1,0 +1,45 @@
+name: "${PROJECT_NAME?}"
+
+services:
+
+  mariadb:
+    extends:
+      file: compose.yaml
+      service: mariadb
+    build:
+      context: "./mariadb"
+      dockerfile: Dockerfile-devel
+      args:
+        MARIADB_VERSION: "${MARIADB_VERSION?}"
+    image: "flederwiesel/mariadb:${MARIADB_VERSION?}-devel"
+    volumes:
+      - "mariadb-home:/root"
+      - "./home/.bashrc:/root/.bashrc"
+      - "./home/.my.cnf:/root/.my.cnf"
+      - "./home/.nanorc:/root/.nanorc"
+      - "./mariadb/initdb.d:/docker-entrypoint-initdb.d"
+
+  apache:
+    extends:
+      file: compose.yaml
+      service: apache
+    build:
+      context: "./apache"
+      dockerfile: Dockerfile-devel
+      args:
+        PHPMYADMIN_VERSION: "${PHPMYADMIN_VERSION?}"
+        XDEBUG_VERSION: "${XDEBUG_VERSION?}"
+    image: "flederwiesel/php:${PHP_VERSION?}-apache-devel"
+    volumes:
+      - "./apache/www/phpmyadmin/config.inc.php.in:/var/www/phpmyadmin/config.inc.php.in"
+      - "apache-home:/root"
+      - "./home/.bashrc:/root/.bashrc"
+      - "./home/.my.cnf:/root/.my.cnf"
+      - "./home/.nanorc:/root/.nanorc"
+    ports:
+      - "8443:8443"
+
+volumes:
+  apache-home:
+  mariadb-home:
+  mariadb-data:

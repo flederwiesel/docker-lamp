@@ -22,7 +22,7 @@ jobs:
           - simple
           - development
 
-    name: ${{ matrix.envfile }}  -${{ matrix.flavour }}
+    name: ${{ matrix.envfile }}-${{ matrix.flavour }}
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code

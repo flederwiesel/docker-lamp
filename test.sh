@@ -41,17 +41,25 @@ curl --cacert "${SCRIPTDIR:-.}/certs/ca-cert.crt" https://localhost &>/dev/null
 
 # Check for loaded PHP extensions
 
-# Some extensions are only present for development, filter those via
-# SKIP_CHECK_PHPEXT="foo|bar" instead of coding expected output and grep list twice...
+# Determine whether this is a development image
 iid=$(docker compose images apache --quiet)
 image=$(docker inspect "$iid" --format "{{index .RepoTags 0}}")
 
 if [[ $image =~ -devel$ ]]; then
 	echo "Detected development environment..."
 	DEVELOPMENT=true
+	# Development image should display errors
+	PHP_DISPLAY_ERRORS=On
 else
+	# Some extensions are only present for development, filter those via
+	# SKIP_CHECK_PHPEXT="foo|bar" instead of coding expected output and grep list twice...
 	SKIP_CHECK_PHPEXT="mysqli"
+	# Production image MUST NOT display errors
+	PHP_DISPLAY_ERRORS=Off
 fi
+
+docker compose exec apache \
+	grep "^display_errors\s*=\s*$PHP_DISPLAY_ERRORS" /usr/local/etc/php/php.ini
 
 diff -u <(
 	# Expected output

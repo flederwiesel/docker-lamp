@@ -95,7 +95,7 @@ jobs:
           COMPOSE_ENV_FILES: ${{ matrix.envfile }}
           HTMLDIR: ./html
         run: |
-          curl --cacert certs/ca-cert.crt https://localhost | grep "It works"
+          curl -sS --cacert certs/ca-cert.crt https://localhost | grep "It works"
 
       # Run the test script -- in trace mode to see what is about to happen...
       - name: Run test

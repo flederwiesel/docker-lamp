@@ -42,6 +42,7 @@ services:
       - "./apache/etc/sites-available:/etc/apache2/sites-available"
       - "./certs/apache:/etc/apache2/ssl"
       - "./certs/ca-cert.crt:/usr/local/share/ca-certificates/ca-cert.crt"
+      - "./php/${PHP_VERSION}/etc/php.ini-production:/usr/local/etc/php/php.ini"
       - "${HTMLDIR:-./apache/www/html}:/var/www/html"
     ports:
       - "80:80"

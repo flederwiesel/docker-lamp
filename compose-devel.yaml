@@ -36,6 +36,7 @@ services:
       - "./home/.bashrc:/root/.bashrc"
       - "./home/.my.cnf:/root/.my.cnf"
       - "./home/.nanorc:/root/.nanorc"
+      - "./php/${PHP_VERSION}/etc/php.ini-development:/usr/local/etc/php/php.ini"
     ports:
       - "8443:8443"
 

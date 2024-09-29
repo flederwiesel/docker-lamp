@@ -20,6 +20,7 @@ jobs:
           - "env_php-8.3.11_mariadb-11.2.4"
         flavour:
           - simple
+          - simple-htmldir
           - development
 
     name: ${{ matrix.envfile }}-${{ matrix.flavour }}
@@ -36,16 +37,38 @@ jobs:
           # View created files
           find certs/ -printf "%M %p\n" | sort -k 1.12
 
+      # Run the production version
       - name: Build and run docker images
+        if: matrix.flavour == 'simple'
         env:
           COMPOSE_ENV_FILES: ${{ matrix.envfile }}
         run: |
-          if [ "${{ matrix.flavour }}" = "simple" ]; then
             docker compose up --detach
-          else
-            ${GITHUB_WORKSPACE}/docker-compose-devel up --detach
-          fi
 
+      # Run the production version with custom HTMLDIR
+      - name: Build and run docker images
+        if: matrix.flavour == 'simple-htmldir'
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+          HTMLDIR: ./html
+        run: |
+            mkdir "$HTMLDIR"
+            echo "It works" > "$HTMLDIR/index.html"
+
+            docker compose up --detach
+
+      # Run the development version
+      - name: Build and run docker images
+        if: matrix.flavour == 'development'
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+        run: |
+            ${GITHUB_WORKSPACE}/docker-compose-devel up --detach
+
+      - name: Wait for startup
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+        run: |
           # Wait for startup of services by parsing output and
           # exiting awk if all conditions are met
           timeout 10 awk 'BEGIN { apache = mariadb = temp = 0 }
@@ -65,9 +88,21 @@ jobs:
             apache == 1 && mariadb == 1 { exit 0 }
           ' <(docker compose logs --follow apache mariadb)
 
+      # As only test we should get back what we echo'ed into the index file above
       - name: Run test
+        if: matrix.flavour == 'simple-htmldir'
         env:
           COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+          HTMLDIR: ./html
+        run: |
+          curl --cacert certs/ca-cert.crt https://localhost | grep "It works"
+
+      # Run the test script -- in trace mode to see what is about to happen...
+      - name: Run test
+        if: matrix.flavour != 'simple-htmldir'
+        env:
+          COMPOSE_ENV_FILES: ${{ matrix.envfile }}
+          HTMLDIR: ./html
         run: |
           bash -x ${GITHUB_WORKSPACE}/test.sh
 

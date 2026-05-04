@@ -330,7 +330,7 @@ serialize_precision = -1
 ; This directive allows you to disable certain functions.
 ; It receives a comma-delimited list of function names.
 ; https://php.net/disable-functions
-disable_functions =
+disable_functions = system, exec, shell_exec, passthru, phpinfo, show_source, highlight_file, popen, proc_open, fopen_with_path, dbmopen, dbase_open, putenv, move_uploaded_file, chdir, mkdir, rmdir, chmod, rename, filepro, filepro_rowcount, filepro_retrieve, posix_mkfifo
 
 ; This directive allows you to disable certain classes.
 ; It receives a comma-delimited list of class names.
@@ -407,7 +407,7 @@ zend.exception_string_param_max_len = 0
 ; threat in any way, but it makes it possible to determine whether you use PHP
 ; on your server or not.
 ; https://php.net/expose-php
-expose_php = On
+expose_php = Off
 
 ;;;;;;;;;;;;;;;;;;;
 ; Resource Limits ;
@@ -416,7 +416,7 @@ expose_php = On
 ; Maximum execution time of each script, in seconds
 ; https://php.net/max-execution-time
 ; Note: This directive is hardcoded to 0 for the CLI SAPI
-max_execution_time = 30
+max_execution_time = 60
 
 ; Maximum amount of time each script may spend parsing request data. It's a good
 ; idea to limit this time on productions servers in order to eliminate unexpectedly
@@ -442,7 +442,7 @@ max_input_time = 60
 
 ; Maximum amount of memory a script may consume
 ; https://php.net/memory-limit
-memory_limit = 128M
+memory_limit = 50M
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Error handling and logging ;
@@ -568,7 +568,7 @@ report_memleaks = On
 ; the error message is formatted as HTML or not.
 ; Note: This directive is hardcoded to Off for the CLI SAPI
 ; https://php.net/html-errors
-;html_errors = On
+html_errors = Off
 
 ; If html_errors is set to On *and* docref_root is not empty, then PHP
 ; produces clickable error messages that direct to a page describing the error
@@ -865,7 +865,7 @@ file_uploads = On
 upload_max_filesize = 2M
 
 ; Maximum number of files that can be uploaded via a single request
-max_file_uploads = 20
+max_file_uploads = 2
 
 ;;;;;;;;;;;;;;;;;;
 ; Fopen wrappers ;
@@ -873,7 +873,7 @@ max_file_uploads = 20
 
 ; Whether to allow the treatment of URLs (like http:// or ftp://) as files.
 ; https://php.net/allow-url-fopen
-allow_url_fopen = On
+allow_url_fopen = Off
 
 ; Whether to allow include/require to open URLs (like https:// or ftp://) as files.
 ; https://php.net/allow-url-include
@@ -1390,14 +1390,14 @@ session.save_handler = files
 ; vulnerability. It is disabled by default for maximum compatibility, but
 ; enabling it is encouraged.
 ; https://wiki.php.net/rfc/strict_sessions
-session.use_strict_mode = 0
+session.use_strict_mode = 1
 
 ; Whether to use cookies.
 ; https://php.net/session.use-cookies
 session.use_cookies = 1
 
 ; https://php.net/session.cookie-secure
-;session.cookie_secure =
+session.cookie_secure = 1
 
 ; This option forces PHP to fetch and use a cookie for storing and maintaining
 ; the session id. We encourage this operation as it's very helpful in combating
@@ -1408,7 +1408,7 @@ session.use_only_cookies = 1
 
 ; Name of the session (used as cookie name).
 ; https://php.net/session.name
-session.name = PHPSESSID
+session.name = myPHPSESSID
 
 ; Initialize session on request startup.
 ; https://php.net/session.auto-start
@@ -1416,7 +1416,7 @@ session.auto_start = 0
 
 ; Lifetime in seconds of cookie or, if 0, until browser is restarted.
 ; https://php.net/session.cookie-lifetime
-session.cookie_lifetime = 0
+session.cookie_lifetime = 14400 # 4 hours
 
 ; The path for which the cookie is valid.
 ; https://php.net/session.cookie-path
@@ -1429,13 +1429,13 @@ session.cookie_domain =
 ; Whether or not to add the httpOnly flag to the cookie, which makes it
 ; inaccessible to browser scripting languages such as JavaScript.
 ; https://php.net/session.cookie-httponly
-session.cookie_httponly =
+session.cookie_httponly = 1
 
 ; Add SameSite attribute to cookie to help mitigate Cross-Site Request Forgery (CSRF/XSRF)
 ; Current valid values are "Strict", "Lax" or "None". When using "None",
 ; make sure to include the quotes, as `none` is interpreted like `false` in ini files.
 ; https://tools.ietf.org/html/draft-west-first-party-cookies-07
-session.cookie_samesite =
+session.cookie_samesite = Strict
 
 ; Handler used to serialize data. php is the standard serializer of PHP.
 ; https://php.net/session.serialize-handler
@@ -1463,7 +1463,7 @@ session.gc_divisor = 1000
 ; After this number of seconds, stored data will be seen as 'garbage' and
 ; cleaned up by the garbage collection process.
 ; https://php.net/session.gc-maxlifetime
-session.gc_maxlifetime = 1440
+session.gc_maxlifetime = 600
 
 ; NOTE: If you are using the subdirectory option for storing session files
 ;       (see session.save_path above), then garbage collection does *not*
@@ -1486,7 +1486,7 @@ session.cache_limiter = nocache
 
 ; Document expires after n minutes.
 ; https://php.net/session.cache-expire
-session.cache_expire = 180
+session.cache_expire = 30
 
 ; trans sid support is disabled by default.
 ; Use of trans sid may risk your users' security.
@@ -1507,7 +1507,7 @@ session.use_trans_sid = 0
 ; Default Value: 32
 ; Development Value: 26
 ; Production Value: 26
-session.sid_length = 26
+session.sid_length = 256
 
 ; The URL rewriter will look for URLs in a defined set of HTML tags.
 ; <form> is special; if you include them here, the rewriter will
@@ -1544,7 +1544,7 @@ session.trans_sid_tags = "a=href,area=href,frame=src,form="
 ; Development Value: 5
 ; Production Value: 5
 ; https://php.net/session.hash-bits-per-character
-session.sid_bits_per_character = 5
+session.sid_bits_per_character = 6
 
 ; Enable upload progress tracking in $_SESSION
 ; Default Value: On
